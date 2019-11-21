@@ -700,7 +700,7 @@ function canCompleteAction(state, action){
 }
 
 function isDebug(w){
-  return w.location.search.indexOf('debug') !== -1
+  return true
 }
 
 // -------- Services ---------
