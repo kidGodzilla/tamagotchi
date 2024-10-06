@@ -252,8 +252,8 @@ body{
 .debug{
   display: block;
   position: fixed;
-  top: 0;
-  right: 0;
+  top: env(safe-area-inset-top);
+  right: env(safe-area-inset-right);
   padding: 1rem;
   color: #fff;
   background: rgba(0, 0, 0, 0.9);
