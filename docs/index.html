@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#f2d7bf">
     <title>Tamagotchi</title>
-    <link href="style.css" rel="stylesheet">
+    <link href="style.css?v2" rel="stylesheet">
   </head>
   <body>
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" display="none"></svg>
@@ -26,9 +26,10 @@
     <div class="debug hide"></div>
     <audio id="buttonSound" src="button.mp3"></audio>
     <script src="svg.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v2"></script>
     
-    <div style="position: fixed;top: -17px;left: 12px;" onclick="document.querySelector('.debug').classList.toggle('hide');">?</div>
+    <script>function isDebug () { return true }</script>
+    <div style="position: fixed; top: calc(env(safe-area-inset-top) - 17px); left: 12px;" onclick="document.querySelector('.debug').classList.toggle('hide');">?</div>
 
   </body>
 </html>

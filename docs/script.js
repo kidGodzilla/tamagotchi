@@ -745,7 +745,7 @@ function initUI(state){
       p.setAttribute('max', state.creature[k].max === -1 ? 100000 : state.creature[k].max);
       state.ui.debug.appendChild(state.ui.resources[k])
     });
-    state.ui.debug.classList.remove('hide');
+    //state.ui.debug.classList.remove('hide');
   }
   state.ui.gameActions = document.querySelector('.game');
   state.ui.editorActions = document.querySelector('.editor');
