@@ -189,10 +189,10 @@ class Awake extends Action{
       type: 'awake',
       duration: -1,
       cost: {
-        energy: 1 / TIME_FACTOR
+        energy: 0.5 / TIME_FACTOR  // Slower energy decay
       },
       gain: {
-        fatigue: 0.5 / TIME_FACTOR
+        fatigue: 0.05 / TIME_FACTOR  // Much slower fatigue accumulation
       }
     });
   }
@@ -242,7 +242,7 @@ class Bathroom extends Action{
       duration: BATHROOM_DURATION * 1000,
       cost: {
         concentration: 5 / BATHROOM_DURATION,
-        waste: 10 / BATHROOM_DURATION
+        waste: 15 / BATHROOM_DURATION  // Eliminate waste faster
       },
       gain: {
         experience: 100 / BATHROOM_DURATION,
@@ -694,6 +694,11 @@ function canCompleteAction(state, action){
       return true;
     }
   }
+  if(action instanceof Sleep){
+    // Sleep completes when duration is reached or fatigue is fully restored
+    const diff = calculateResources(state).diff;
+    return action.duration !== -1 && (checkDate - action.start >= action.duration) || diff.fatigue.count <= 1;
+  }
   if(action instanceof Eat){
     return !canEat(state);
   }
@@ -769,6 +774,10 @@ function initUI(state){
   state.scoreValue = span;
   state.score.appendChild(span);
   state.score.appendChild(createSvgIcon('symbol-star-icon'));
+  
+  state.hint = document.querySelector('.hint');
+  state.hintValue = document.createElement('span');
+  state.hint.appendChild(state.hintValue);
 }
 
 function changeSelectedEditorOption(state, editableOption){
@@ -844,6 +853,13 @@ function updateUI(state){
   if(score != state.scoreValue.textContent){
     state.scoreValue.textContent = score;
   }
+  
+  // Update hint text
+  const hint = getPetHint(state, diff);
+  if(hint !== state.hintValue.textContent){
+    state.hintValue.textContent = hint;
+  }
+  
   if(isDebug(window)){
     resourceKeys.forEach(k => {
       const p = state.ui.resources[k].querySelector('progress');
@@ -950,6 +966,13 @@ function replaceRigModifiers(state, replace){
 }
 
 function checkActions(state){
+  // Check for automatic sleep when fatigue fills
+  const diff = calculateResources(state).diff;
+  if(isAwake(state) && isFatigued(state, diff)){
+    performAction(state, 'sleep');
+    return;
+  }
+  
   state.creature.actions.slice().forEach(a => {
     if(canCompleteAction(state, a)){
       if(a instanceof Sleep){
@@ -990,6 +1013,24 @@ function completeAction(state, action){
   const calc = calculateResources(state);
   const diff = calc.diff;
   const actionType = actionKeys.find(k => action instanceof actions[k]);
+  
+  // Apply immediate effects for quick actions
+  if(action instanceof Eat){
+    diff.energy.count = Math.min(diff.energy.count + 8, state.creature.energy.max);
+    diff.waste.count = Math.min(diff.waste.count + 6, state.creature.waste.max);  // More waste from eating
+  } else if(action instanceof Bathroom){
+    diff.waste.count = Math.max(diff.waste.count - 12, state.creature.waste.min);  // Eliminate more waste instantly
+    diff.ideas.count = Math.min(diff.ideas.count + 1, state.creature.ideas.max);
+  } else if(action instanceof Play){
+    diff.ideas.count = Math.min(diff.ideas.count + 2, state.creature.ideas.max);
+    diff.experience.count += 50;
+  } else if(action instanceof Create){
+    diff.experience.count += 200;
+  } else if(action instanceof Observe){
+    diff.concentration.count = Math.min(diff.concentration.count + 3, state.creature.concentration.max);
+    diff.energy.count = Math.min(diff.energy.count + 2, state.creature.energy.max);
+  }
+  
   updateResources(state, diff);
   state.creature.actions.splice(state.creature.actions.indexOf(action), 1);
   state.creature.actions.forEach(a => {
@@ -1094,6 +1135,29 @@ function getMood(state, diff){
     },
     reason: 'no other match'
   };
+}
+
+function getPetHint(state, diff){
+  // Check for specific needs and provide helpful hints
+  if(diff.energy.count <= 2){
+    return "I'm hungry! Feed me!";
+  }
+  if(diff.waste.count >= 8){
+    return "I need to use the bathroom!";
+  }
+  if(diff.fatigue.count >= 8){
+    return "I'm getting tired...";
+  }
+  if(diff.concentration.count <= 2){
+    return "I need to rest and observe...";
+  }
+  if(diff.ideas.count <= 2){
+    return "I'm feeling uninspired...";
+  }
+  if(diff.energy.count >= 8 && diff.waste.count <= 2 && diff.fatigue.count <= 2){
+    return "I feel great! Let's play!";
+  }
+  return "I'm doing okay!";
 }
 
 function rangeContains(r, n){
