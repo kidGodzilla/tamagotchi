@@ -850,8 +850,21 @@ function updateUI(state){
     }
   }
   let score = Math.ceil(diff.experience.count / 1000);
-  if(score != state.scoreValue.textContent){
-    state.scoreValue.textContent = score;
+  const formattedScore = score.toLocaleString();
+  if(formattedScore != state.scoreValue.textContent){
+    state.scoreValue.textContent = formattedScore;
+  }
+  
+  // Hide star icon when score is large (>= 1000)
+  const starIcon = state.score.querySelector('svg');
+  if(score >= 1000){
+    if(starIcon && !starIcon.classList.contains('hide')){
+      starIcon.classList.add('hide');
+    }
+  } else {
+    if(starIcon && starIcon.classList.contains('hide')){
+      starIcon.classList.remove('hide');
+    }
   }
   
   // Update hint text
